@@ -11,6 +11,7 @@ A safe, terminal-style Windows storage analyzer that helps you find what is usin
 - Protected labels for Windows and application locations.
 - Review labels for Downloads, caches, temporary files, installers, archives, backups, and disk images.
 - TXT, CSV, and JSON reports.
+- Live terminal progress showing the current path, counts, elapsed time, and largest file found so far.
 - Read-only RAM status and practical memory recommendations.
 - No third-party Python packages required.
 
@@ -45,6 +46,14 @@ py .\vinnie_booster.py C:\ --output .\reports
 ```
 
 Open the TXT report first. Open the CSV in Excel when you want to sort or filter. Keep the JSON report as the complete machine-readable record.
+
+While scanning, Vinnie Booster updates one live terminal line similar to:
+
+```text
+Scanning: C:\Users\vincent\Videos\... | files 12,480 | folders 1,203 | elapsed 18s | largest 7.4 GB
+```
+
+The line refreshes in place rather than flooding the terminal. The final report is written only after the scan finishes.
 
 ## Controls
 

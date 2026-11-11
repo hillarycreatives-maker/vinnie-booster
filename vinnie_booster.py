@@ -194,6 +194,10 @@ def scan(root: Path, max_depth: int, protected_roots: list[str]) -> tuple[list[d
     scanned_files = 0
     scanned_dirs = 0
     inaccessible = 0
+    started = time.monotonic()
+    last_progress = started
+    largest_file = "(none yet)"
+    largest_size = 0
 
     for path, is_dir, size, error in iter_entries(root, max_depth):
         if error:
@@ -202,6 +206,9 @@ def scan(root: Path, max_depth: int, protected_roots: list[str]) -> tuple[list[d
             scanned_dirs += 1
         else:
             scanned_files += 1
+            if size > largest_size:
+                largest_size = size
+                largest_file = str(path)
             # Add each file to all existing ancestors in this scan's root.
             parent = path.parent
             while True:
@@ -221,6 +228,21 @@ def scan(root: Path, max_depth: int, protected_roots: list[str]) -> tuple[list[d
             "extension": path.suffix.lower() if not is_dir else "",
         })
 
+        now = time.monotonic()
+        if now - last_progress >= 0.75:
+            elapsed = now - started
+            display_path = str(path)
+            if len(display_path) > 100:
+                display_path = "..." + display_path[-97:]
+            progress = (
+                f"\rScanning: {display_path:<100} | "
+                f"files {scanned_files:,} | folders {scanned_dirs:,} | "
+                f"elapsed {elapsed:.0f}s | largest {human_bytes(largest_size)}"
+            )
+            sys.stdout.write(progress)
+            sys.stdout.flush()
+            last_progress = now
+
     for path_text, size in folder_sizes.items():
         path = Path(path_text)
         category, reason = classify(path, True, protected_roots)
@@ -234,6 +256,11 @@ def scan(root: Path, max_depth: int, protected_roots: list[str]) -> tuple[list[d
             "extension": "",
         })
 
+    sys.stdout.write("\r" + " " * 150 + "\r")
+    sys.stdout.write(
+        f"Scan complete: {scanned_files:,} files, {scanned_dirs:,} folders; "
+        f"largest file {human_bytes(largest_size)} — {largest_file}\n"
+    )
     records.sort(key=lambda item: item["size_bytes"], reverse=True)
     stats = {
         "scanned_files": scanned_files,

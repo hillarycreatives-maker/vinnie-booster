@@ -23,11 +23,19 @@ A safe, terminal-style Windows storage analyzer that helps you find what is usin
 ## Quick start
 
 1. Download `vinnie_booster.py`.
-2. Open PowerShell in the download folder.
-3. Scan your personal files first:
+2. Open PowerShell or Command Prompt in the download folder.
+3. Scan your personal files first.
+
+In **PowerShell**:
 
 ```powershell
 py .\vinnie_booster.py "$env:USERPROFILE" --output .\reports
+```
+
+In **Command Prompt (`cmd.exe`)**:
+
+```bat
+py .\vinnie_booster.py "%USERPROFILE%" --output .\reports
 ```
 
 4. For a full drive scan, run PowerShell as Administrator and use:
@@ -60,6 +68,8 @@ py .\vinnie_booster.py C:\ --max-depth 6 --output .\reports
 # Read-only memory status
 py .\vinnie_booster.py --ram
 ```
+
+The scanner also accepts the PowerShell-style `$env:USERPROFILE` text if it is accidentally pasted into Command Prompt, but `%USERPROFILE%` is the native Command Prompt form.
 
 ## What to do after the report
 

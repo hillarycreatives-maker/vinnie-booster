@@ -115,6 +115,14 @@ def normalize(path: Path) -> str:
     return os.path.normcase(os.path.normpath(str(path)))
 
 
+def expand_windows_path(value: str) -> Path:
+    """Accept normal paths plus %USERPROFILE% and PowerShell $env:NAME syntax."""
+    expanded = value
+    for name, content in os.environ.items():
+        expanded = expanded.replace(f"$env:{name}", content)
+    return Path(os.path.expandvars(expanded)).expanduser().resolve()
+
+
 def classify(path: Path, is_dir: bool, protected_roots: list[str]) -> tuple[str, str]:
     normalized = normalize(path)
     if any(normalized == root or normalized.startswith(root + os.sep) for root in protected_roots):
@@ -288,7 +296,7 @@ def main() -> int:
     if args.ram:
         return print_ram_status()
 
-    root = Path(args.root).expanduser().resolve()
+    root = expand_windows_path(args.root)
     if not root.exists() or not root.is_dir():
         print(f"Error: scan root does not exist or is not a folder: {root}", file=sys.stderr)
         return 2

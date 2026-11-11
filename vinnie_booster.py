@@ -23,6 +23,46 @@ from typing import Iterable
 DEFAULT_TOP = 50
 DEFAULT_MAX_DEPTH = 12
 
+
+def print_ram_status() -> int:
+    """Print read-only Windows memory status; never terminates processes."""
+    print("=== VINNIE BOOSTER :: RAM CHECK ===")
+    if os.name != "nt":
+        print("RAM check is available when this script is run on Windows.")
+        return 0
+    import ctypes
+
+    class MemoryStatus(ctypes.Structure):
+        _fields_ = [
+            ("dwLength", ctypes.c_ulong),
+            ("dwMemoryLoad", ctypes.c_ulong),
+            ("ullTotalPhys", ctypes.c_ulonglong),
+            ("ullAvailPhys", ctypes.c_ulonglong),
+            ("ullTotalPageFile", ctypes.c_ulonglong),
+            ("ullAvailPageFile", ctypes.c_ulonglong),
+            ("ullTotalVirtual", ctypes.c_ulonglong),
+            ("ullAvailVirtual", ctypes.c_ulonglong),
+            ("ullAvailExtendedVirtual", ctypes.c_ulonglong),
+        ]
+
+    status = MemoryStatus()
+    status.dwLength = ctypes.sizeof(MemoryStatus)
+    if not ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(status)):
+        print("Windows could not provide memory status.")
+        return 1
+    to_gb = 1024 ** 3
+    print(f"Memory load: {status.dwMemoryLoad}%")
+    print(f"Available:   {status.ullAvailPhys / to_gb:.1f} GB")
+    print(f"Total:       {status.ullTotalPhys / to_gb:.1f} GB")
+    if status.dwMemoryLoad >= 90:
+        print("Recommendation: close unused applications and browser tabs, then check Task Manager.")
+    elif status.dwMemoryLoad >= 75:
+        print("Recommendation: review heavy applications in Task Manager before starting more work.")
+    else:
+        print("Recommendation: memory pressure is currently moderate.")
+    print("Vinnie Booster does not terminate processes or claim to create RAM.")
+    return 0
+
 # These locations are protected or require review even if they are large.
 PROTECTED_NAMES = {
     "Windows",
@@ -242,7 +282,11 @@ def main() -> int:
     parser.add_argument("root", nargs="?", default="C:\\", help="Drive or folder to scan, default: C:\\")
     parser.add_argument("--output", default="storage_scan_reports", help="Folder for reports")
     parser.add_argument("--max-depth", type=int, default=DEFAULT_MAX_DEPTH, help=f"Maximum folder depth, default: {DEFAULT_MAX_DEPTH}")
+    parser.add_argument("--ram", action="store_true", help="Show read-only RAM status and safe recommendations")
     args = parser.parse_args()
+
+    if args.ram:
+        return print_ram_status()
 
     root = Path(args.root).expanduser().resolve()
     if not root.exists() or not root.is_dir():
@@ -253,6 +297,7 @@ def main() -> int:
         return 2
 
     protected_roots = [normalize(path) for path in safe_roots()]
+    print("=== VINNIE BOOSTER :: STORAGE SCAN ===")
     print(f"Scanning: {root}")
     print("Report-only mode: no files will be deleted or modified.")
     print("This may take time on a large drive; progress is shown when complete.")
